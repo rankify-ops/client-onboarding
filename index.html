@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rankify — Client Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e14;--surface:#111820;--border:rgba(255,255,255,0.08);
+  --teal:#2dd4a8;--teal-dim:rgba(45,212,168,0.12);
+  --white:#f0f2f5;--muted:#8b95a5;--faint:#5a6270;
+  --red:#ef6b6b;--amber:#f59e0b;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--white);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 80px}
+.logo{font-size:1.4rem;font-weight:700;margin-bottom:4px;letter-spacing:-0.02em}
+.logo span{color:var(--teal)}
+.subtitle{font-size:0.75rem;color:var(--muted);margin-bottom:32px}
+
+.form-container{width:100%;max-width:640px}
+
+/* Progress */
+.progress{display:flex;gap:6px;margin-bottom:32px}
+.progress-step{flex:1;height:4px;border-radius:4px;background:var(--border);transition:background 0.3s}
+.progress-step.active{background:var(--teal)}
+.progress-step.done{background:rgba(45,212,168,0.4)}
+
+.step-label{font-size:0.7rem;color:var(--muted);margin-bottom:20px;text-transform:uppercase;letter-spacing:0.08em}
+
+/* Steps */
+.step{display:none}
+.step.active{display:block}
+
+/* Form elements */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:0.78rem;font-weight:500;color:var(--muted);margin-bottom:6px}
+.field .hint{font-size:0.65rem;color:var(--faint);margin-top:4px}
+.field input,.field textarea,.field select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--white);font-family:inherit;font-size:0.85rem;transition:border-color 0.2s;outline:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(45,212,168,0.4)}
+.field textarea{resize:vertical;min-height:80px}
+.field select option{background:var(--surface);color:var(--white)}
+.field input::placeholder,.field textarea::placeholder{color:var(--faint)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.field-row{grid-template-columns:1fr}}
+
+.required::after{content:" *";color:var(--red);font-size:0.7rem}
+
+/* Color picker row */
+.color-row{display:flex;gap:10px;align-items:center}
+.color-swatch{width:40px;height:40px;border-radius:8px;border:2px solid var(--border);cursor:pointer;overflow:hidden;position:relative}
+.color-swatch input[type="color"]{position:absolute;inset:-4px;width:48px;height:48px;border:none;cursor:pointer;opacity:0}
+.color-swatch-preview{width:100%;height:100%;border-radius:6px}
+.color-label{font-size:0.75rem;color:var(--muted)}
+.add-color{width:40px;height:40px;border-radius:8px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--faint);font-size:1.2rem;transition:border-color 0.2s}
+.add-color:hover{border-color:rgba(45,212,168,0.4);color:var(--teal)}
+
+/* File upload */
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s}
+.upload-zone:hover{border-color:rgba(45,212,168,0.3)}
+.upload-zone.has-file{border-color:rgba(45,212,168,0.4);background:var(--teal-dim)}
+.upload-icon{font-size:1.5rem;margin-bottom:6px;color:var(--faint)}
+.upload-text{font-size:0.75rem;color:var(--muted)}
+.upload-filename{font-size:0.75rem;color:var(--teal);margin-top:6px}
+
+/* Checkbox group */
+.check-group{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.check-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all 0.2s;font-size:0.8rem}
+.check-item:hover{border-color:rgba(45,212,168,0.3)}
+.check-item.selected{border-color:var(--teal);background:var(--teal-dim)}
+.check-item input{display:none}
+.check-dot{width:16px;height:16px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.check-item.selected .check-dot{border-color:var(--teal);background:var(--teal)}
+.check-item.selected .check-dot::after{content:"";width:6px;height:6px;background:#fff;border-radius:2px}
+
+/* Buttons */
+.btn-row{display:flex;gap:10px;margin-top:28px}
+.btn{padding:10px 28px;border-radius:8px;font-family:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;border:none;transition:all 0.2s}
+.btn-primary{background:var(--teal);color:#0a0e14}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--white)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* Success */
+.success-screen{display:none;text-align:center;padding:60px 20px}
+.success-icon{font-size:3rem;margin-bottom:16px}
+.success-title{font-size:1.3rem;font-weight:700;margin-bottom:8px}
+.success-text{font-size:0.85rem;color:var(--muted);line-height:1.6}
+
+/* Validation */
+.field.error input,.field.error textarea,.field.error select{border-color:var(--red)}
+.field .error-msg{font-size:0.65rem;color:var(--red);margin-top:4px;display:none}
+.field.error .error-msg{display:block}
+</style>
+</head>
+<body>
+
+<div class="logo"><span>R</span> Rankify</div>
+<p class="subtitle">Client Onboarding — tell us about your business</p>
+
+<div class="form-container">
+  <div class="progress" id="progress"></div>
+
+  <!-- Step 1: Business Basics -->
+  <div class="step active" data-step="1">
+    <div class="step-label">Step 1 of 5 — Business Basics</div>
+    <div class="field-row">
+      <div class="field"><label class="required">Business Name</label><input type="text" id="f-business" placeholder="e.g. Acme Plumbing"></div>
+      <div class="field"><label class="required">Your Name</label><input type="text" id="f-name" placeholder="e.g. John Smith"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label class="required">Email</label><input type="email" id="f-email" placeholder="john@acmeplumbing.com.au"></div>
+      <div class="field"><label class="required">Phone</label><input type="tel" id="f-phone" placeholder="0400 000 000"></div>
+    </div>
+    <div class="field"><label>Business Address</label><input type="text" id="f-address" placeholder="123 Main St, Melbourne VIC 3000"></div>
+    <div class="field"><label>ABN</label><input type="text" id="f-abn" placeholder="12 345 678 901"></div>
+    <div class="btn-row"><div></div><button class="btn btn-primary" onclick="nextStep()">Next</button></div>
+  </div>
+
+  <!-- Step 2: About Your Business -->
+  <div class="step" data-step="2">
+    <div class="step-label">Step 2 of 5 — About Your Business</div>
+    <div class="field-row">
+      <div class="field"><label class="required">Industry</label>
+        <select id="f-industry">
+          <option value="">Select...</option>
+          <option>Trades & Construction</option>
+          <option>Health & Wellness</option>
+          <option>Beauty & Aesthetics</option>
+          <option>Food & Hospitality</option>
+          <option>Retail & Ecommerce</option>
+          <option>Professional Services</option>
+          <option>Real Estate</option>
+          <option>Automotive</option>
+          <option>Education & Training</option>
+          <option>Fitness & Sport</option>
+          <option>Pet Services</option>
+          <option>Cleaning & Maintenance</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Industry (if Other)</label><input type="text" id="f-industry-other" placeholder="Your industry"></div>
+    </div>
+    <div class="field"><label class="required">What does your business do?</label><textarea id="f-description" placeholder="Describe your business in a few sentences — what you do, who you serve, what makes you different..."></textarea><div class="hint">This helps us write your website copy. The more detail the better.</div></div>
+    <div class="field"><label class="required">Services / Products</label><textarea id="f-services" placeholder="List your main services or products, one per line:&#10;e.g. Emergency Plumbing&#10;Hot Water Systems&#10;Bathroom Renovations"></textarea></div>
+    <div class="field"><label>Service Areas / Locations</label><textarea id="f-locations" placeholder="List the suburbs, cities or regions you serve, one per line:&#10;e.g. Melbourne CBD&#10;South Yarra&#10;Richmond"></textarea><div class="hint">We'll create location pages for local SEO.</div></div>
+    <div class="field"><label>Target Audience</label><input type="text" id="f-audience" placeholder="e.g. Homeowners in Melbourne, small businesses, property managers"></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="prevStep()">Back</button><button class="btn btn-primary" onclick="nextStep()">Next</button></div>
+  </div>
+
+  <!-- Step 3: Branding -->
+  <div class="step" data-step="3">
+    <div class="step-label">Step 3 of 5 — Branding</div>
+    <div class="field">
+      <label class="required">Logo</label>
+      <div class="upload-zone" id="logo-zone" onclick="document.getElementById('f-logo').click()">
+        <input type="file" id="f-logo" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="handleFileUpload(this,'logo-zone','logo-name')">
+        <div class="upload-icon">&#8682;</div>
+        <div class="upload-text">Click to upload your logo (PNG, JPG, SVG)</div>
+        <div class="upload-filename" id="logo-name"></div>
+      </div>
+      <div class="hint">Transparent PNG or SVG preferred. We need a high-resolution version.</div>
+    </div>
+    <div class="field">
+      <label>Favicon / Icon</label>
+      <div class="upload-zone" id="favicon-zone" onclick="document.getElementById('f-favicon').click()" style="padding:16px">
+        <input type="file" id="f-favicon" accept=".png,.jpg,.jpeg,.svg,.ico" style="display:none" onchange="handleFileUpload(this,'favicon-zone','favicon-name')">
+        <div class="upload-text">Upload favicon/icon (optional)</div>
+        <div class="upload-filename" id="favicon-name"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Brand Colors</label>
+      <div class="hint" style="margin-bottom:8px">Click the swatches to pick your brand colors, or tell us below.</div>
+      <div class="color-row" id="color-row">
+        <div class="color-swatch" title="Primary color">
+          <input type="color" value="#2dd4a8" onchange="this.parentElement.querySelector('.color-swatch-preview').style.background=this.value">
+          <div class="color-swatch-preview" style="background:#2dd4a8"></div>
+        </div>
+        <div class="color-swatch" title="Secondary color">
+          <input type="color" value="#1a1a2e" onchange="this.parentElement.querySelector('.color-swatch-preview').style.background=this.value">
+          <div class="color-swatch-preview" style="background:#1a1a2e"></div>
+        </div>
+        <div class="add-color" onclick="addColorSwatch()" title="Add another color">+</div>
+      </div>
+    </div>
+    <div class="field"><label>Brand Notes</label><textarea id="f-brand-notes" placeholder="Any brand guidelines, font preferences, style direction, or vibe you're going for?&#10;e.g. Modern and clean, professional but approachable, dark theme"></textarea></div>
+    <div class="field">
+      <label>Additional Images / Photos</label>
+      <div class="upload-zone" id="photos-zone" onclick="document.getElementById('f-photos').click()" style="padding:16px">
+        <input type="file" id="f-photos" accept=".png,.jpg,.jpeg,.webp" multiple style="display:none" onchange="handleMultiUpload(this,'photos-zone','photos-list')">
+        <div class="upload-text">Upload team photos, product images, workplace shots (select multiple)</div>
+        <div class="upload-filename" id="photos-list"></div>
+      </div>
+      <div class="hint">These will be used on your website. The more the better.</div>
+    </div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="prevStep()">Back</button><button class="btn btn-primary" onclick="nextStep()">Next</button></div>
+  </div>
+
+  <!-- Step 4: Website Requirements -->
+  <div class="step" data-step="4">
+    <div class="step-label">Step 4 of 5 — Website Requirements</div>
+    <div class="field">
+      <label>What pages do you need?</label>
+      <div class="check-group" id="pages-group">
+        <label class="check-item selected"><input type="checkbox" value="Home" checked><span class="check-dot"></span>Home</label>
+        <label class="check-item selected"><input type="checkbox" value="About" checked><span class="check-dot"></span>About</label>
+        <label class="check-item selected"><input type="checkbox" value="Services" checked><span class="check-dot"></span>Services</label>
+        <label class="check-item selected"><input type="checkbox" value="Contact" checked><span class="check-dot"></span>Contact</label>
+        <label class="check-item"><input type="checkbox" value="Gallery"><span class="check-dot"></span>Gallery / Portfolio</label>
+        <label class="check-item"><input type="checkbox" value="Testimonials"><span class="check-dot"></span>Testimonials</label>
+        <label class="check-item"><input type="checkbox" value="FAQ"><span class="check-dot"></span>FAQ</label>
+        <label class="check-item"><input type="checkbox" value="Blog"><span class="check-dot"></span>Blog</label>
+        <label class="check-item"><input type="checkbox" value="Pricing"><span class="check-dot"></span>Pricing</label>
+        <label class="check-item"><input type="checkbox" value="Locations"><span class="check-dot"></span>Location Pages</label>
+        <label class="check-item"><input type="checkbox" value="Booking"><span class="check-dot"></span>Booking / Calendar</label>
+        <label class="check-item"><input type="checkbox" value="Shop"><span class="check-dot"></span>Shop / Products</label>
+      </div>
+    </div>
+    <div class="field"><label>Existing Website URL</label><input type="url" id="f-existing-url" placeholder="https://www.yourbusiness.com.au"><div class="hint">If you have a current site, we'll reference it for content and structure.</div></div>
+    <div class="field"><label>Inspiration Sites</label><textarea id="f-inspiration" placeholder="Paste URLs of websites you like the look/feel of, one per line"></textarea></div>
+    <div class="field"><label>Special Features or Requests</label><textarea id="f-features" placeholder="Anything specific you need?&#10;e.g. Contact form, Google Maps embed, booking widget, before/after gallery"></textarea></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="prevStep()">Back</button><button class="btn btn-primary" onclick="nextStep()">Next</button></div>
+  </div>
+
+  <!-- Step 5: Social & Final -->
+  <div class="step" data-step="5">
+    <div class="step-label">Step 5 of 5 — Social & Final Details</div>
+    <div class="field-row">
+      <div class="field"><label>Facebook</label><input type="url" id="f-facebook" placeholder="https://facebook.com/yourbusiness"></div>
+      <div class="field"><label>Instagram</label><input type="url" id="f-instagram" placeholder="https://instagram.com/yourbusiness"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Google Business</label><input type="url" id="f-google" placeholder="https://g.page/yourbusiness"></div>
+      <div class="field"><label>LinkedIn</label><input type="url" id="f-linkedin" placeholder="https://linkedin.com/company/yourbusiness"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>TikTok</label><input type="url" id="f-tiktok" placeholder="https://tiktok.com/@yourbusiness"></div>
+      <div class="field"><label>YouTube</label><input type="url" id="f-youtube" placeholder="https://youtube.com/@yourbusiness"></div>
+    </div>
+    <div class="field"><label>Tagline / Slogan</label><input type="text" id="f-tagline" placeholder="e.g. Melbourne's Most Trusted Plumber"><div class="hint">If you have one — otherwise we'll create one for you.</div></div>
+    <div class="field"><label>Call to Action</label><input type="text" id="f-cta" placeholder="e.g. Get a Free Quote, Book Now, Call Us Today"><div class="hint">What do you want visitors to do?</div></div>
+    <div class="field"><label>Anything else?</label><textarea id="f-other" placeholder="Anything we missed? Special requirements, deadlines, content you want included..."></textarea></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="prevStep()">Back</button><button class="btn btn-primary" onclick="submitForm()" id="submit-btn">Submit Onboarding</button></div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="success">
+    <div class="success-icon">&#10003;</div>
+    <div class="success-title">You're all set!</div>
+    <div class="success-text">We've received your onboarding details.<br>Our team will start building your website and be in touch within 48 hours.<br><br>If you need to update anything, reply to your confirmation email.</div>
+  </div>
+</div>
+
+<script>
+const TOTAL_STEPS = 5;
+let currentStep = 1;
+const _files = { logo: null, favicon: null, photos: [] };
+
+function initProgress() {
+  const el = document.getElementById('progress');
+  el.innerHTML = Array.from({length: TOTAL_STEPS}, (_, i) =>
+    `<div class="progress-step${i === 0 ? ' active' : ''}" data-ps="${i+1}"></div>`
+  ).join('');
+}
+initProgress();
+
+function updateProgress() {
+  document.querySelectorAll('.progress-step').forEach(el => {
+    const s = parseInt(el.dataset.ps);
+    el.classList.toggle('done', s < currentStep);
+    el.classList.toggle('active', s === currentStep);
+  });
+}
+
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const target = document.querySelector(`.step[data-step="${n}"]`);
+  if (target) target.classList.add('active');
+  currentStep = n;
+  updateProgress();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function validateStep(n) {
+  let valid = true;
+  document.querySelectorAll('.field.error').forEach(f => f.classList.remove('error'));
+
+  if (n === 1) {
+    ['f-business','f-name','f-email','f-phone'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) { el.closest('.field').classList.add('error'); valid = false; }
+    });
+  }
+  if (n === 2) {
+    ['f-industry','f-description','f-services'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.value.trim()) { el.closest('.field').classList.add('error'); valid = false; }
+    });
+  }
+  if (n === 3) {
+    if (!_files.logo) {
+      document.getElementById('logo-zone').closest('.field').classList.add('error');
+      valid = false;
+    }
+  }
+  return valid;
+}
+
+function nextStep() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+}
+function prevStep() {
+  if (currentStep > 1) showStep(currentStep - 1);
+}
+
+function handleFileUpload(input, zoneId, nameId) {
+  const file = input.files[0];
+  if (!file) return;
+  const zone = document.getElementById(zoneId);
+  const nameEl = document.getElementById(nameId);
+  zone.classList.add('has-file');
+  nameEl.textContent = file.name;
+  const key = zoneId.replace('-zone','');
+  _files[key] = file;
+}
+
+function handleMultiUpload(input, zoneId, listId) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const zone = document.getElementById(zoneId);
+  const listEl = document.getElementById(listId);
+  zone.classList.add('has-file');
+  listEl.textContent = files.map(f => f.name).join(', ');
+  _files.photos = files;
+}
+
+function addColorSwatch() {
+  const row = document.getElementById('color-row');
+  const addBtn = row.querySelector('.add-color');
+  const swatch = document.createElement('div');
+  swatch.className = 'color-swatch';
+  swatch.innerHTML = '<input type="color" value="#ffffff" onchange="this.parentElement.querySelector(\'.color-swatch-preview\').style.background=this.value"><div class="color-swatch-preview" style="background:#ffffff"></div>';
+  row.insertBefore(swatch, addBtn);
+}
+
+// Checkbox toggle
+document.querySelectorAll('.check-item').forEach(item => {
+  item.addEventListener('click', e => {
+    if (e.target.tagName === 'INPUT') return;
+    const cb = item.querySelector('input');
+    cb.checked = !cb.checked;
+    item.classList.toggle('selected', cb.checked);
+  });
+});
+
+function gatherData() {
+  const colors = Array.from(document.querySelectorAll('#color-row .color-swatch input[type="color"]')).map(c => c.value);
+  const pages = Array.from(document.querySelectorAll('#pages-group input:checked')).map(c => c.value);
+
+  return {
+    business: document.getElementById('f-business').value.trim(),
+    contact: document.getElementById('f-name').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
+    abn: document.getElementById('f-abn').value.trim(),
+    industry: document.getElementById('f-industry').value === 'Other'
+      ? document.getElementById('f-industry-other').value.trim()
+      : document.getElementById('f-industry').value,
+    description: document.getElementById('f-description').value.trim(),
+    services: document.getElementById('f-services').value.trim(),
+    locations: document.getElementById('f-locations').value.trim(),
+    audience: document.getElementById('f-audience').value.trim(),
+    brandColors: colors,
+    brandNotes: document.getElementById('f-brand-notes').value.trim(),
+    existingUrl: document.getElementById('f-existing-url').value.trim(),
+    inspiration: document.getElementById('f-inspiration').value.trim(),
+    features: document.getElementById('f-features').value.trim(),
+    pages: pages,
+    facebook: document.getElementById('f-facebook').value.trim(),
+    instagram: document.getElementById('f-instagram').value.trim(),
+    google: document.getElementById('f-google').value.trim(),
+    linkedin: document.getElementById('f-linkedin').value.trim(),
+    tiktok: document.getElementById('f-tiktok').value.trim(),
+    youtube: document.getElementById('f-youtube').value.trim(),
+    tagline: document.getElementById('f-tagline').value.trim(),
+    cta: document.getElementById('f-cta').value.trim(),
+    other: document.getElementById('f-other').value.trim(),
+  };
+}
+
+async function submitForm() {
+  if (!validateStep(currentStep)) return;
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  const data = gatherData();
+
+  // Upload files to blob storage, then submit
+  const formData = new FormData();
+  formData.append('data', JSON.stringify(data));
+  if (_files.logo) formData.append('logo', _files.logo);
+  if (_files.favicon) formData.append('favicon', _files.favicon);
+  _files.photos.forEach(f => formData.append('photos', f));
+
+  try {
+    const res = await fetch(ONBOARDING_API, { method: 'POST', body: formData });
+    if (res.ok) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById('progress').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || 'Something went wrong. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Submit Onboarding';
+    }
+  } catch (e) {
+    alert('Connection error. Please check your internet and try again.');
+    btn.disabled = false;
+    btn.textContent = 'Submit Onboarding';
+  }
+}
+
+// API endpoint — will point to rankify-crm.vercel.app/api/onboarding once deployed
+const ONBOARDING_API = 'https://rankify-crm.vercel.app/api/onboarding';
+</script>
+</body>
+</html>
