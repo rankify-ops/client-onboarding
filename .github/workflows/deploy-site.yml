@@ -38,23 +38,22 @@ jobs:
           # Commit and push
           git add -A
           git commit -m "Auto-generated site for ${{ inputs.company }}" || echo "No changes"
-          git push origin master || git push origin main
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          git push origin "$BRANCH"
 
       - name: Enable GitHub Pages
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          # Try to enable Pages (ignore if already enabled)
+          # Get the default branch name
+          DEFAULT_BRANCH=$(curl -s "https://api.github.com/repos/rankify-ops/${{ inputs.slug }}" \
+            -H "Authorization: token ${GH_TOKEN}" | grep -o '"default_branch":"[^"]*"' | cut -d'"' -f4)
+          # Enable Pages on the default branch
           curl -s -X POST "https://api.github.com/repos/rankify-ops/${{ inputs.slug }}/pages" \
             -H "Authorization: token ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             -H "Content-Type: application/json" \
-            -d '{"build_type":"legacy","source":{"branch":"master","path":"/"}}' || \
-          curl -s -X POST "https://api.github.com/repos/rankify-ops/${{ inputs.slug }}/pages" \
-            -H "Authorization: token ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            -d '{"build_type":"legacy","source":{"branch":"main","path":"/"}}'
+            -d "{\"build_type\":\"legacy\",\"source\":{\"branch\":\"${DEFAULT_BRANCH}\",\"path\":\"/\"}}" || true
 
       - name: Update CRM status
         run: |
