@@ -370,6 +370,15 @@ function gatherData() {
   };
 }
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name: file.name, type: file.type, data: reader.result.split(',')[1] });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitForm() {
   if (!validateStep(currentStep)) return;
   const btn = document.getElementById('submit-btn');
@@ -377,16 +386,18 @@ async function submitForm() {
   btn.textContent = 'Submitting...';
 
   const data = gatherData();
+  const files = {};
 
-  // Upload files to blob storage, then submit
-  const formData = new FormData();
-  formData.append('data', JSON.stringify(data));
-  if (_files.logo) formData.append('logo', _files.logo);
-  if (_files.favicon) formData.append('favicon', _files.favicon);
-  _files.photos.forEach(f => formData.append('photos', f));
+  if (_files.logo) files.logo = await fileToBase64(_files.logo);
+  if (_files.favicon) files.favicon = await fileToBase64(_files.favicon);
+  if (_files.photos.length) files.photos = await Promise.all(_files.photos.map(fileToBase64));
 
   try {
-    const res = await fetch(ONBOARDING_API, { method: 'POST', body: formData });
+    const res = await fetch(ONBOARDING_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, files: Object.keys(files).length ? files : undefined }),
+    });
     if (res.ok) {
       document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
       document.getElementById('progress').style.display = 'none';
