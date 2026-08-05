@@ -45,9 +45,11 @@ Define ALL of these — they make the site consistent:
   --color-primary-light: /* 10% lighter variant */;
   --color-primary-dark: /* 10% darker variant */;
 
-  /* Neutrals */
-  --color-bg: /* main background */;
-  --color-surface: /* card/section background */;
+  /* Neutrals — IMPORTANT: page background must be warm gray (#f0f2f5
+     or #f5f5f5), NEVER pure white. This gives frosted glass elements
+     contrast and depth. Pure white pages look flat and cheap. */
+  --color-bg: #f0f2f5;  /* warm gray, adjust to complement brand */
+  --color-surface: /* card/section background, slightly lighter than bg */;
   --color-surface-elevated: /* raised cards, dropdowns */;
   --color-text: /* primary text */;
   --color-text-muted: /* secondary/body text */;
@@ -86,22 +88,39 @@ Define ALL of these — they make the site consistent:
   --grid-gap: var(--space-xl);
   --card-gap: var(--space-lg);
 
-  /* Effects */
+  /* Effects — IMPORTANT: use brand-tinted shadows, NOT generic black.
+     Replace 0,0,0 below with the secondary brand color's RGB values.
+     e.g. if secondary is #1e293b, use rgba(30,41,59,...) for all shadows.
+     This makes shadows feel cohesive, not like a template. */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
-  --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
-  --glass-bg: rgba(255,255,255,0.05);
+  --shadow-sm: 0 1px 3px rgba(BRAND_RGB, 0.06);
+  --shadow-md: 0 4px 12px rgba(BRAND_RGB, 0.08);
+  --shadow-lg: 0 8px 30px rgba(BRAND_RGB, 0.1);
+  --shadow-xl: 0 20px 60px rgba(BRAND_RGB, 0.14);
+  --shadow-glow: 0 6px 20px rgba(PRIMARY_RGB, 0.25);
+
+  /* Frosted glass — the signature Rankify look.
+     Always pair blur with saturate. Use on: nav, mobile menu, hero stat
+     cards, dark-section cards, sticky mobile CTA, form containers. */
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-bg-light: rgba(255,255,255,0.55);
   --glass-border: rgba(255,255,255,0.1);
-  --glass-blur: blur(12px);
+  --glass-border-light: rgba(255,255,255,0.7);
+  --glass-blur: blur(20px) saturate(1.5);
+
+  /* Neumorphic inset highlight — apply to ALL glass surfaces.
+     Top edge catch light + bottom edge shadow = 3D glass illusion. */
+  --glass-inset: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(0,0,0,0.02);
+
+  /* Transitions — use custom easing, not default ease */
   --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-spring: 600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 ```
 
@@ -109,9 +128,10 @@ Define ALL of these — they make the site consistent:
 
 ## Typography Rules
 
+- Apply `-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale` on `body`
 - Google Fonts: pick exactly 2 fonts that match the brand notes
-  - Heading font: bold/strong (e.g., Inter, Poppins, Plus Jakarta Sans, Montserrat, Outfit)
-  - Body font: readable (e.g., Inter, DM Sans, Source Sans 3, Nunito Sans)
+  - Heading font: bold/strong (e.g., Poppins, Plus Jakarta Sans, DM Sans, Outfit, Inter)
+  - Body font: readable (e.g., DM Sans, Inter, Source Sans 3, Arimo, Nunito Sans)
 - Headings: `font-weight: 700–800`, `line-height: var(--line-height-tight)`, `letter-spacing: var(--letter-spacing-tight)`
 - Body text: `font-weight: 400`, `line-height: var(--line-height-normal)`, `font-size: var(--font-size-lg)` (18px, not 16)
 - NEVER let a single word orphan onto the next line in headings — use `text-wrap: balance` on all `h1, h2, h3`
@@ -137,24 +157,36 @@ Define ALL of these — they make the site consistent:
 ## Header / Navigation
 
 ### Desktop (>768px)
-- Sticky header: `position: sticky; top: 0; z-index: 1000`
-- Frosted glass background: `background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-bottom: 1px solid var(--glass-border)`
-- Layout: Logo left, nav links center or right, CTA button far right
-- Nav links: `font-size: var(--font-size-sm)`, `font-weight: 500`, no underlines, subtle hover effect (color change or underline slide-in)
-- Active page: highlighted with primary color underline or text color
-- CTA button in header: primary color, pill-shaped (`border-radius: var(--radius-full)`), stands out from nav links
-- Optional: phone number with phone icon next to CTA
-- Header height: ~70-80px, vertically centered content
+- `position: fixed; top: 0; left: 0; right: 0; z-index: 100` (fixed, not sticky)
+- **Frosted glass** background: `background: rgba(255,255,255,0.65)`, `backdrop-filter: blur(20px) saturate(1.5)`, `border-bottom: 1px solid rgba(255,255,255,0.5)`
+- Add neumorphic shadow: `box-shadow: 0 4px 30px rgba(0,0,0,0.06), var(--glass-inset)`
+- Layout: `display: flex; align-items: center; justify-content: space-between`
+- Logo left (text/wordmark, `font-weight: 800`, `font-size: 1.2rem`)
+- Nav links center: `font-size: 0.875rem`, `font-weight: 600`, `gap: 32px`, no underlines
+- Nav link hover: color shifts to primary, with `::after` underline that slides in from left (`width: 0` → `width: 100%` on hover, `transition: width 0.25s`)
+- Active page: primary color text + underline visible
+- Right side: phone number (with inline SVG phone icon) + CTA button (primary color, pill `border-radius: var(--radius-full)`, `padding: 10px 24px`)
+- Header height: `height: 72px`, content vertically centered
+- Add `padding-top: 72px` to `<main>` on every page to offset fixed header
+- Transition between states: `transition: all 0.3s ease`
 
 ### Mobile (<768px)
-- MUST have a hamburger menu icon (three lines) — NOT a stacking nav that takes up half the screen
-- Hamburger button: top-right, `width: 44px; height: 44px` minimum tap target
-- Menu opens as a full-screen or slide-in overlay with frosted glass background
-- Menu items: large text (`font-size: var(--font-size-xl)`), generous spacing (`padding: var(--space-md) 0`), centered or left-aligned
-- Animate open/close: slide in from right or fade in, `transition: var(--transition-base)`
-- Close button (X icon) in same position as hamburger
-- CTA button and phone number visible in mobile menu
-- When menu is open: `body { overflow: hidden }` to prevent background scroll
+- Same frosted glass header, but shorter: `height: 60px`
+- Logo left, hamburger button right
+- **Hamburger icon**: 3 horizontal lines using `<span>` elements inside a button
+  - Container: `width: 44px; height: 44px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; background: none; border: none; cursor: pointer`
+  - Each span: `display: block; width: 22px; height: 2px; background: var(--color-text); border-radius: 2px; transition: all 0.3s ease`
+  - When open: top span rotates 45deg, middle hides, bottom rotates -45deg to form an X
+- **Mobile menu overlay**: `position: fixed; inset: 0; z-index: 99`
+  - Background: `background: rgba(SECONDARY_RGB, 0.95)` (dark brand color at 95% opacity)
+  - `backdrop-filter: blur(20px) saturate(1.5)`
+  - Entrance: `transform: translateX(100%)` → `translateX(0)`, `transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+  - Close button: top-right, 44x44px, X icon, `hover: rotate(90deg)`
+- **Menu items**: `font-size: 1.25rem`, `font-weight: 600`, color white, `padding: 16px 0`, centered
+  - Stagger entrance: each link delayed by 50ms (`transition-delay: 0ms, 50ms, 100ms...`)
+- **Bottom of mobile menu**: phone number + "Get a Free Quote" button, both full-width, stacked
+- When menu open: `body.menu-open { overflow: hidden }` — prevent background scrolling
+- DO NOT just let nav links wrap onto multiple lines — that looks broken
 
 ---
 
@@ -260,10 +292,28 @@ The contact form MUST be a multi-step form, not a single long form. This is a co
 - Dividers between stats: `border-right: 1px solid var(--color-border)` (not on last)
 - On mobile: 2x2 grid
 
+### Section Labels (above every section title)
+- Small tag/label text above the section heading
+- `font-size: 0.72rem`, `text-transform: uppercase`, `letter-spacing: 3px`, `font-weight: 700`, `color: var(--color-primary)`
+- Optional: decorative lines either side using `::before` and `::after` pseudo-elements (40px wide, 2px tall bars in primary color)
+- `margin-bottom: var(--space-md)` between label and heading
+
+### Section Dividers
+- Between sections, use a subtle CSS gradient line: `height: 1px; background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06) 20%, rgba(0,0,0,0.06) 80%, transparent)`
+- This is more refined than a solid `border-bottom`
+
 ### Service Highlights (Home Page)
-- Grid of 3–6 cards, each with: icon, title, short description (2 lines max), optional "Learn more" link
-- Icon: inline SVG in primary color or emoji, `font-size: 2.5rem`
-- On click/link: scrolls to that service section on services.html
+- Grid of 3–6 cards, each with: icon, title, short description (2 lines max), "Learn more →" link
+- Icon: `width: 64px; height: 64px`, centered in a rounded square (`border-radius: 14px`) with gradient background using `linear-gradient(135deg, var(--color-primary-light), #fff)`
+- Icon hover: gradient flips to solid primary, icon goes white, `transform: scale(1.05) rotate(-3deg)` — playful tilt
+- Card hover: `transform: translateY(-4px)`, border shifts to primary color, shadow increases
+- On click/link: goes to services.html
+
+### Dark "Rhythm Breaker" Section
+- One section (usually "Why Choose Us" or expertise) should use a dark background (`var(--color-secondary)` or darkest brand shade) with light text
+- This BREAKS the visual rhythm and re-captures attention — don't make every section the same
+- Cards in dark sections: use frosted glass (`background: rgba(255,255,255,0.04)`, `backdrop-filter: blur(10px)`, `border: 1px solid rgba(255,255,255,0.08)`)
+- Optional: subtle radial gradient pseudo-element for ambient glow behind cards
 
 ### CTA Sections
 - Between content sections, add a CTA strip/banner
@@ -271,6 +321,7 @@ The contact form MUST be a multi-step form, not a single long form. This is a co
 - Text centered: bold heading + subtext + button(s)
 - `padding: var(--space-3xl) 0`
 - Button in CTA section: inverted colors (white button on colored bg)
+- Add at least 2 CTA sections per site — one mid-page, one above footer
 
 ### FAQ Accordion
 - Clean accordion with `+` / `−` toggle icon (right side)
@@ -303,29 +354,58 @@ The contact form MUST be a multi-step form, not a single long form. This is a co
 
 ## Animations & Transitions
 
-- **Scroll reveal**: elements fade in and slide up 20px as they enter viewport
-  - Use Intersection Observer in script.js
-  - CSS class `.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }`
-  - `.reveal.visible { opacity: 1; transform: translateY(0); }`
-  - Stagger children with `transition-delay` (0ms, 100ms, 200ms, etc.)
-- **Button hover**: `transform: translateY(-2px)`, shadow increase
-- **Card hover**: `transform: translateY(-4px)`, shadow increase
-- **Link hover**: color transition, underline slide-in from left (use `::after` pseudo-element)
-- **NO jarring animations** — everything subtle, 250-400ms, ease timing
+### Scroll Reveal (REQUIRED)
+Every section and card should fade in on scroll. Implement in script.js:
+```javascript
+// Add .fade class to sections, cards, headings etc
+const fades = document.querySelectorAll('.fade');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold: 0.1 });
+fades.forEach(el => observer.observe(el));
+```
+CSS:
+```css
+.fade { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+.fade.visible { opacity: 1; transform: translateY(0); }
+```
+- Stagger children: apply `transition-delay` in increments of 100ms
+- Add `.fade` to: every `<section>`, every card, stat items, CTA blocks
+
+### Hover Effects
+- **Buttons**: `transform: translateY(-2px)`, `box-shadow` increases, `transition: all var(--transition-base)`
+- **Cards**: `transform: translateY(-4px)`, shadow deepens, border color shifts to primary
+- **Service icon squares**: `transform: scale(1.05) rotate(-3deg)` — playful tilt micro-interaction
+- **Nav links**: `::after` underline slides in from left (`width: 0` → `100%`)
+- **Social icons**: `transform: translateY(-2px)`, background fills with primary color
+- **Gallery items**: image `transform: scale(1.08)` inside `overflow: hidden` container, overlay fades in
+
+### Other Animations
+- **FAQ accordion**: `max-height: 0` → `max-height: 500px`, `transition: max-height 0.35s ease`, toggle icon rotates 45deg
+- **Mobile menu entrance**: `transform: translateX(100%)` → `translateX(0)`, menu items stagger-fade in
+- **Form step transitions**: `opacity: 0; transform: translateY(10px)` → visible, 0.3s, applied when advancing steps
+- **NO jarring motion** — everything 250-700ms with custom cubic-bezier easing
 - **Reduced motion**: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }`
 
 ---
 
 ## Footer
 
-- Dark background (darkest shade of brand palette or `--color-secondary`)
-- 4-column grid on desktop: About/Logo, Quick Links, Services, Contact Info
-- On mobile: stack into single column or 2x2
-- Logo + one-liner description in first column
-- Social links: inline SVG icons (Facebook, Instagram, Google) in a row, `gap: var(--space-md)`
-- Social icons: `width: 24px`, hover: primary color
-- Bottom bar: copyright, ABN, license number — `font-size: var(--font-size-sm)`, muted color, `border-top: 1px solid var(--color-border)`
-- Generous padding: `padding: var(--space-4xl) 0 var(--space-xl)`
+- Dark background: `var(--color-secondary)` or darkest brand shade, `color: rgba(255,255,255,0.7)`
+- `padding: 64px 0 24px`
+- Grid: `grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px` on desktop
+- On mobile (`<768px`): `grid-template-columns: 1fr 1fr; gap: 32px`, then single column on small mobile
+- **Column 1**: Logo (white version / light text wordmark) + one-liner description + social icons row
+- **Column 2**: Quick Links (Home, About, Services, etc.)
+- **Column 3**: Services list (linking to services.html)
+- **Column 4**: Contact info (phone, email, address — each with inline SVG icon, all clickable)
+- Social icons: `width: 36px; height: 36px` circles, `background: rgba(255,255,255,0.06)`, `border: 1px solid rgba(255,255,255,0.1)`, `border-radius: 50%`, inline SVG centered inside
+- Social icon hover: `background: var(--color-primary)`, `transform: translateY(-2px)`, `transition: all 0.25s`
+- Link color in footer: `rgba(255,255,255,0.6)`, hover: `color: var(--color-primary)`
+- Column headings: `font-weight: 700`, `color: #fff`, `margin-bottom: var(--space-lg)`
+- **Bottom bar**: `border-top: 1px solid rgba(255,255,255,0.08)`, `padding-top: 24px`, `margin-top: 48px`
+- Bottom bar text: `font-size: 0.78rem`, `color: rgba(255,255,255,0.4)`
+- Bottom bar content: `© {YEAR} {Business Name}. ABN {abn}. {license info}.` left, `Website by <a href="https://rankify.com.au" style="color:var(--color-primary)">Rankify</a>` right
 
 ---
 
@@ -351,6 +431,15 @@ The contact form MUST be a multi-step form, not a single long form. This is a co
 - No hover-dependent functionality — everything accessible by tap
 - Images/placeholders: `max-width: 100%; height: auto`
 - Tables: horizontal scroll wrapper if present
+
+### Sticky Mobile CTA Bar (REQUIRED)
+On mobile only (`@media (max-width: 768px)`), add a sticky bottom bar:
+- `position: fixed; bottom: 14px; left: 14px; right: 14px; z-index: 99`
+- Frosted glass: `background: rgba(255,255,255,0.55)`, `backdrop-filter: blur(24px) saturate(1.6)`
+- `border: 1px solid rgba(255,255,255,0.5)`, `border-radius: var(--radius-full)`, `box-shadow: 0 8px 32px rgba(BRAND_RGB, 0.18)`
+- Two buttons side by side inside: Call (outline/glass style) + Get Quote (solid primary), both pill-shaped
+- `padding: 8px` inside the bar, `display: flex; gap: 8px`
+- This stays visible as the user scrolls — maximum conversion opportunity
 
 ---
 
@@ -404,3 +493,33 @@ These make the difference between a brochure and a lead generator:
 - NO auto-playing media
 - NO horizontal scrolling on any viewport
 - NO raw hex colors in HTML — use CSS variables for everything
+- NO pure white (#fff) page background — always use warm gray (#f0f2f5 or similar) for glass contrast
+- NO generic black shadows — tint shadows with the brand's secondary color RGB values
+- NO default `ease` timing on card/button hover — use `cubic-bezier(0.4, 0, 0.2, 1)`
+- NO nav links just wrapping/stacking on mobile — MUST use hamburger menu with overlay
+- NO floating/disconnected elements — everything snaps to the spacing scale grid
+- NO page without a "Website by Rankify" credit in the footer bottom bar
+- NO page without at least 2 CTA opportunities (header + mid/bottom CTA section)
+
+---
+
+## Pre-Delivery Quality Checklist
+
+Before marking a site as complete, verify ALL of these:
+
+1. Every page loads with no console errors
+2. Every page has unique `<title>` and `<meta description>`
+3. Header is fixed, frosted glass, hamburger on mobile
+4. Hero is at least 80vh with tagline, CTAs, and trust badges
+5. All phone numbers are clickable `tel:` links
+6. Contact form is multi-step (not one long form)
+7. At least one dark "rhythm breaker" section exists
+8. At least 2 CTA sections (mid-page + above footer)
+9. Footer has 4 columns with "Website by Rankify" credit
+10. Sticky mobile CTA bar appears on mobile viewport
+11. All cards have hover lift effects
+12. Scroll reveal animations work on sections and cards
+13. No single orphan words in headings
+14. No mismatched button sizes in pairs
+15. Page background is warm gray, not white
+16. Shadows use brand-tinted colors, not generic black
