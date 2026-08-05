@@ -415,8 +415,52 @@ async function submitForm() {
   }
 }
 
-// API endpoint — will point to rankify-crm.vercel.app/api/onboarding once deployed
 const ONBOARDING_API = 'https://rankify-crm.vercel.app/api/onboarding';
+
+// ── MOCK DATA (remove for production) ──
+(function prefillMock() {
+  const mock = {
+    'f-business': 'Spark & Wire Electrical',
+    'f-name': 'Dave Mitchell',
+    'f-email': 'dave@sparkandwire.com.au',
+    'f-phone': '0412 555 789',
+    'f-address': '14 Industrial Ave, Geelong VIC 3220',
+    'f-abn': '98 765 432 100',
+    'f-industry': 'Trades & Construction',
+    'f-description': 'Spark & Wire Electrical is a family-owned electrical business serving Geelong and the Surf Coast for over 15 years. We specialise in residential rewiring, switchboard upgrades, solar panel installations, and EV charger setups. What sets us apart is our same-day emergency service and upfront fixed pricing — no hidden call-out fees. We work with homeowners, builders, and property managers across the Bellarine Peninsula.',
+    'f-services': 'Residential Electrical\nCommercial Electrical\nSwitchboard Upgrades\nSolar Panel Installation\nEV Charger Installation\nSafety Inspections & Compliance\nEmergency Electrical Repairs\nLED Lighting Upgrades\nSmart Home Wiring',
+    'f-locations': 'Geelong\nGeelong West\nNewtown\nBelmont\nHighton\nOcean Grove\nBarwon Heads\nTorquay\nLara\nCorio',
+    'f-audience': 'Homeowners, property managers, and builders in the Geelong and Surf Coast region',
+    'f-brand-notes': 'Bold and trustworthy. Dark navy background with electric yellow/amber accents. Modern but not techy — approachable tradie feel. Clean sans-serif fonts. Think premium tradie, not cheap sparky.',
+    'f-existing-url': 'https://www.sparkandwire.com.au',
+    'f-inspiration': 'https://geelongheatpumps.com.au/\nhttps://tintek.com.au/',
+    'f-features': 'Contact form with service dropdown\nGoogle Maps embed showing service area\nBefore/after gallery for switchboard upgrades\nGoogle Reviews widget\nClick-to-call button on mobile',
+    'f-facebook': 'https://facebook.com/sparkandwiregeelong',
+    'f-instagram': 'https://instagram.com/sparkandwire',
+    'f-google': 'https://g.page/sparkandwireelectrical',
+    'f-linkedin': '',
+    'f-tiktok': '',
+    'f-youtube': '',
+    'f-tagline': "Geelong's Most Trusted Sparky",
+    'f-cta': 'Get a Free Quote',
+    'f-other': 'We have a 4.9 star rating on Google with 180+ reviews — definitely want to feature that prominently. Also need to mention we are licensed (REC 12345) and fully insured.',
+  };
+  Object.entries(mock).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  // Set color swatches
+  const swatches = document.querySelectorAll('#color-row .color-swatch');
+  if (swatches[0]) { swatches[0].querySelector('input').value = '#f59e0b'; swatches[0].querySelector('.color-swatch-preview').style.background = '#f59e0b'; }
+  if (swatches[1]) { swatches[1].querySelector('input').value = '#1e293b'; swatches[1].querySelector('.color-swatch-preview').style.background = '#1e293b'; }
+  // Check extra pages
+  document.querySelectorAll('#pages-group .check-item').forEach(item => {
+    const cb = item.querySelector('input');
+    if (['Gallery','Testimonials','FAQ','Locations'].includes(cb.value)) {
+      cb.checked = true; item.classList.add('selected');
+    }
+  });
+})();
 </script>
 </body>
 </html>
