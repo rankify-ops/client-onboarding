@@ -1,0 +1,29 @@
+name: Update CRM Status
+on:
+  workflow_dispatch:
+    inputs:
+      clientId:
+        required: true
+      status:
+        required: true
+      website:
+        required: true
+      company:
+        required: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update CRM
+        run: |
+          curl -s -X POST "https://rankify-crm.vercel.app/api/routine" \
+            -H "Authorization: Bearer ${{ secrets.ROUTINE_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"update_status\",\"clientId\":\"${{ inputs.clientId }}\",\"updates\":{\"status\":\"${{ inputs.status }}\",\"website\":\"${{ inputs.website }}\",\"notes\":\"Site auto-generated and deployed to GitHub Pages\"}}"
+
+      - name: Send notification
+        run: |
+          curl -s -X POST "https://lert.dev/p/a508f12c-6bbc-422f-ad6c-1ff5abf7a5fa" \
+            -H "Content-Type: application/json" \
+            -d "{\"title\":\"[RANKIFY] New site built\",\"body\":\"${{ inputs.company }} — ${{ inputs.website }}\"}"
