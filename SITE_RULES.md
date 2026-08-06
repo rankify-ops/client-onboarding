@@ -12,7 +12,22 @@ This is the COMPLETE design and build specification for auto-generated client we
 - All assets inline or relative — hosted on GitHub Pages
 - One shared `style.css`, one shared `script.js`
 - CSS custom properties (variables) for ALL colors, fonts, spacing, border-radius
-- Inline SVG favicon using brand colors via `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">`
+
+### Favicon & Logo from Client Data
+- If `faviconUrl` is provided and non-empty: use `<link rel="icon" href="{faviconUrl}">` (the URL points to Vercel Blob storage, publicly accessible)
+- If `faviconUrl` is empty: generate an inline SVG favicon using brand colors: `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">`
+- If `logoUrl` is provided and non-empty: use `<img src="{logoUrl}" alt="{company}" class="logo-img">` in the header (max-height 40px, auto width)
+- If `logoUrl` is empty: use a text wordmark in the header (company name styled with heading font, weight 800)
+
+### Client Photos
+- If `photoUrls[]` is provided and non-empty: use these real images throughout the site
+  - Gallery page: use actual photos instead of CSS gradient placeholder blocks
+  - Hero section: can use as background image if high quality
+  - About page: use as team/workspace imagery
+  - Services page: use relevant photos for service sections
+  - Always add descriptive `alt` text, `loading="lazy"`, `max-width: 100%; height: auto`
+  - Wrap in `<div>` with `border-radius: var(--radius-lg); overflow: hidden` for consistent styling
+- If `photoUrls[]` is empty: use CSS gradient blocks with brand colors as visual placeholders (already specified in gallery section)
 
 ---
 
@@ -156,19 +171,35 @@ Define ALL of these — they make the site consistent:
 
 ## Header / Navigation
 
+### CRITICAL: No "Home" Link
+- Modern websites do NOT have a "Home" link in the navigation — the logo IS the home link
+- DO NOT add "Home" to desktop nav links, mobile menu links, or footer quick links
+- The logo/wordmark in the header links to `index.html` — that's how users get home
+- Breadcrumbs on interior pages CAN start with "Home" (that's standard breadcrumb convention)
+
 ### Desktop (>768px)
 - `position: fixed; top: 0; left: 0; right: 0; z-index: 100` (fixed, not sticky)
 - **Frosted glass** background: `background: rgba(255,255,255,0.65)`, `backdrop-filter: blur(20px) saturate(1.5)`, `border-bottom: 1px solid rgba(255,255,255,0.5)`
 - Add neumorphic shadow: `box-shadow: 0 4px 30px rgba(0,0,0,0.06), var(--glass-inset)`
 - Layout: `display: flex; align-items: center; justify-content: space-between`
-- Logo left (text/wordmark, `font-weight: 800`, `font-size: 1.2rem`)
-- Nav links center: `font-size: 0.875rem`, `font-weight: 600`, `gap: 32px`, no underlines
+- Logo left: if `logoUrl` provided, use `<img>` (max-height 40px). If not, text wordmark (`font-weight: 800`, `font-size: 1.2rem`). Logo ALWAYS links to `index.html`.
+- Nav links center: `font-size: 0.875rem`, `font-weight: 600`, `gap: 32px`, no underlines. Start with About, NOT Home.
 - Nav link hover: color shifts to primary, with `::after` underline that slides in from left (`width: 0` → `width: 100%` on hover, `transition: width 0.25s`)
 - Active page: primary color text + underline visible
 - Right side: phone number (with inline SVG phone icon) + CTA button (primary color, pill `border-radius: var(--radius-full)`, `padding: 10px 24px`)
 - Header height: `height: 72px`, content vertically centered
 - Add `padding-top: 72px` to `<main>` on every page to offset fixed header
 - Transition between states: `transition: all 0.3s ease`
+
+### Header Scroll Effect (REQUIRED)
+Add scroll-aware header behaviour in script.js:
+```javascript
+const header = document.querySelector('.site-header');
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 50);
+});
+```
+CSS: `.site-header.scrolled` gets `box-shadow: 0 4px 30px rgba(BRAND_RGB, 0.12)` and optionally slightly more opaque background (`rgba(255,255,255,0.85)`). This makes the header feel alive, not static.
 
 ### Mobile (<768px)
 - Same frosted glass header, but shorter: `height: 60px`
@@ -183,8 +214,9 @@ Define ALL of these — they make the site consistent:
   - Entrance: `transform: translateX(100%)` → `translateX(0)`, `transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
   - Close button: top-right, 44x44px, X icon, `hover: rotate(90deg)`
 - **Menu items**: `font-size: 1.25rem`, `font-weight: 600`, color white, `padding: 16px 0`, centered
+  - NO "Home" link — starts with About
   - Stagger entrance: each link delayed by 50ms (`transition-delay: 0ms, 50ms, 100ms...`)
-- **Bottom of mobile menu**: phone number + "Get a Free Quote" button, both full-width, stacked
+- **Bottom of mobile menu**: phone number + primary CTA button, both full-width, stacked
 - When menu open: `body.menu-open { overflow: hidden }` — prevent background scrolling
 - DO NOT just let nav links wrap onto multiple lines — that looks broken
 
@@ -236,7 +268,7 @@ Define ALL of these — they make the site consistent:
 - Padding: `var(--space-xl)` (32px) minimum
 - Shadow: `var(--shadow-sm)` default, `var(--shadow-md)` on hover
 - Hover: `transform: translateY(-4px)`, shadow increases, `transition: all var(--transition-base)`
-- Icon at top of card: use an inline SVG or emoji, `font-size: 2rem`, `margin-bottom: var(--space-md)`
+- **Card icons: use inline SVGs, NEVER emoji.** Emoji render differently on every OS and look unprofessional. Use simple path-based SVGs (24x24 viewBox) with `fill: var(--color-primary)` or `fill: currentColor`. Build icons for the industry (e.g. for electrical: lightning bolt, house, sun, plug, shield, wrench, etc.). The icon container can have a gradient background but the icon itself must be SVG.
 - Card title: `font-size: var(--font-size-xl)`, `font-weight: 700`
 - Card description: `font-size: var(--font-size-base)`, `color: var(--color-text-muted)`
 - Equal height cards in a row: use CSS Grid with `grid-template-rows: subgrid` or flexbox with `align-items: stretch`
@@ -271,7 +303,7 @@ The contact form MUST be a multi-step form, not a single long form. This is a co
 - Validate current step before allowing next
 - Final step: "Send Enquiry" button (primary, full-width on mobile)
 - On submit: show success state (check icon + "We'll be in touch within 24 hours" message)
-- Form action: `mailto:` or Formspree placeholder URL
+- Form submission: use `https://formspree.io/f/xpwzgkqd` as the action URL with `method="POST"`. This is the Rankify catch-all form endpoint. Include a hidden field `<input type="hidden" name="_subject" value="New enquiry from {company website}">` so submissions are identifiable. DO NOT use `mailto:` — it's unreliable and janky. The form should POST JSON via fetch in JavaScript, show the success state on 200, and show an error message on failure.
 
 ### Form Field Styling
 - Inputs: `padding: var(--space-sm) var(--space-md)`, `border: 2px solid var(--color-border)`, `border-radius: var(--radius-md)`, `font-size: var(--font-size-base)`, `background: var(--color-surface)`
@@ -396,7 +428,7 @@ CSS:
 - Grid: `grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px` on desktop
 - On mobile (`<768px`): `grid-template-columns: 1fr 1fr; gap: 32px`, then single column on small mobile
 - **Column 1**: Logo (white version / light text wordmark) + one-liner description + social icons row
-- **Column 2**: Quick Links (Home, About, Services, etc.)
+- **Column 2**: Quick Links (About, Services, Gallery, etc. — NO "Home" link, the logo handles that)
 - **Column 3**: Services list (linking to services.html)
 - **Column 4**: Contact info (phone, email, address — each with inline SVG icon, all clickable)
 - Social icons: `width: 36px; height: 36px` circles, `background: rgba(255,255,255,0.06)`, `border: 1px solid rgba(255,255,255,0.1)`, `border-radius: 50%`, inline SVG centered inside
@@ -458,6 +490,82 @@ On mobile only (`@media (max-width: 768px)`), add a sticky bottom bar:
 
 ---
 
+## Copywriting Rules
+
+The copy on these sites needs to sound like a real business, not a template fill-in-the-blank. This is critical — bad copy makes even great design look cheap.
+
+### Tone & Voice
+- Write like a premium local business, not a corporate brochure
+- Use the client's actual language from their `description` and `brandNotes` — mirror their vocabulary
+- Short, punchy sentences. Long paragraphs lose people.
+- Lead every section with a benefit, not a feature ("Cut your power bills" not "We install solar panels")
+- Use the client's location names naturally throughout copy — this helps SEO AND feels local
+- If the client mentions years in business, reviews, licenses — weave these into copy naturally, don't just list them
+
+### What NEVER to Write
+- "Welcome to our website" — nobody cares
+- "We are a leading provider of..." — generic corporate garbage
+- "Contact us today for more information" — weak CTA
+- "Our team of experienced professionals" — says nothing
+- "We pride ourselves on..." — cliché
+- "Look no further" — cringe
+- "Your one-stop shop" — dated
+- "State-of-the-art" — meaningless
+- Any sentence that could apply to literally any business in any industry
+
+### What TO Write
+- Specific, concrete claims: "15 years in Geelong", "180+ five-star reviews", "same-day callouts"
+- Benefit-first headings: "Sleep Easy Knowing Your Wiring Is Safe" not "Residential Electrical Services"
+- Conversational CTAs: "Get Your Free Quote" not "Submit Enquiry Form"
+- Location-rich content: mention suburbs, landmarks, regions naturally
+- Social proof woven in: "Join 180+ Geelong homeowners who trust us" not just a star rating
+
+---
+
+## Page Content Guidelines
+
+### About Page
+- Tell the brand STORY — how they started, what drives them, what makes them different
+- Use the client's `description` as the foundation but expand it into narrative sections
+- Include a "Why Choose Us" section with 3-4 specific differentiators (not generic cards)
+- Include credentials: license numbers, insurance, qualifications from client data
+- End with a CTA section driving to contact
+
+### Services Page
+- Each service gets its OWN section on the page — not just a grid of cards repeating the home page
+- Each service section: heading, 2-3 paragraphs of real content explaining what's included, who it's for, why they need it
+- Alternate layout between sections (text-left/visual-right, then flip)
+- Include pricing hints if available ("starting from...", "free quotes")
+- Each service section has its own CTA button ("Get a Quote for Solar" not just "Contact Us")
+- At the bottom: a general CTA section
+
+### Gallery Page
+- If `photoUrls[]` has images: use them in a proper grid with hover overlays showing project description
+- If no photos: use styled CSS gradient blocks labeled with project types relevant to the business
+- Each gallery item should have a category label (e.g., "Switchboard Upgrade", "Solar Install")
+- Include a CTA at the bottom: "Want to see your project here?"
+
+### Testimonials Page
+- Show aggregate rating prominently (large number + stars + review count)
+- If client provided specific reviews, display them in styled cards
+- DO NOT fabricate individual reviews with fake names — only use what's provided
+- If no specific reviews: show the aggregate data and a prominent link to their Google Reviews page
+- Add a CTA: "See All Reviews on Google" linking to their Google business page
+
+### FAQ Page
+- Generate 8-12 relevant FAQs based on the business type and services
+- Questions should be what real customers ask: pricing, process, timing, service areas, emergency availability
+- Answers should be specific to THIS business using their actual data (locations, services, contact info)
+- Include a "Still have questions?" CTA at the bottom with phone + email
+
+### Locations / Service Area Page
+- Each location gets a card with the suburb name, brief text about servicing that area, and a CTA
+- Mention the suburb name 2-3 times per card for local SEO
+- Include a Google Maps embed centered on the business address
+- If they serve many areas, group by region (e.g., "Geelong CBD", "Bellarine Peninsula", "Surf Coast")
+
+---
+
 ## Conversion Elements (REQUIRED on every site)
 
 These make the difference between a brochure and a lead generator:
@@ -479,7 +587,7 @@ These make the difference between a brochure and a lead generator:
 
 - NO Lorem Ipsum or placeholder text of any kind
 - NO generic copy ("Welcome to our website", "We are a leading provider", "Contact us today for more information")
-- NO external images (unsplash, pexels, stock photos) — use CSS gradients, patterns, or solid color blocks
+- NO external images from stock sites (unsplash, pexels) — use client's uploaded photos (`photoUrls`) or CSS gradients/patterns
 - NO fabricated testimonials with fake names — only use real review data the client provided
 - NO `display: block` buttons that stretch edge-to-edge with no padding around them
 - NO single words wrapping onto a new line in headings (use `text-wrap: balance`)
@@ -500,6 +608,14 @@ These make the difference between a brochure and a lead generator:
 - NO floating/disconnected elements — everything snaps to the spacing scale grid
 - NO page without a "Website by Rankify" credit in the footer bottom bar
 - NO page without at least 2 CTA opportunities (header + mid/bottom CTA section)
+- NO "Home" link in the navigation — the logo IS the home link (this is modern web convention)
+- NO emoji as card/feature icons — use inline SVGs, emoji look unprofessional and render inconsistently
+- NO `mailto:` form actions — use the Formspree endpoint or fetch-based submission
+- NO repeating the same card grid on the services page as the home page — services page needs expanded per-service sections
+- NO ignoring client-uploaded assets — if `logoUrl`, `faviconUrl`, or `photoUrls` are provided, USE THEM
+- NO static header — must have scroll-aware shadow/opacity change via JS
+- NO identical copy across pages — each page needs unique, purposeful content
+- NO services page that's just a list of names — each service needs 2-3 paragraphs of real content
 
 ---
 
@@ -509,17 +625,26 @@ Before marking a site as complete, verify ALL of these:
 
 1. Every page loads with no console errors
 2. Every page has unique `<title>` and `<meta description>`
-3. Header is fixed, frosted glass, hamburger on mobile
-4. Hero is at least 80vh with tagline, CTAs, and trust badges
-5. All phone numbers are clickable `tel:` links
-6. Contact form is multi-step (not one long form)
-7. At least one dark "rhythm breaker" section exists
-8. At least 2 CTA sections (mid-page + above footer)
-9. Footer has 4 columns with "Website by Rankify" credit
-10. Sticky mobile CTA bar appears on mobile viewport
-11. All cards have hover lift effects
-12. Scroll reveal animations work on sections and cards
-13. No single orphan words in headings
-14. No mismatched button sizes in pairs
-15. Page background is warm gray, not white
-16. Shadows use brand-tinted colors, not generic black
+3. Header is fixed, frosted glass, hamburger on mobile, scroll shadow effect active
+4. NO "Home" link in nav — logo links to index.html instead
+5. Hero is at least 80vh with tagline, CTAs, and trust badges
+6. All phone numbers are clickable `tel:` links
+7. Contact form is multi-step (not one long form), submits via Formspree (not mailto)
+8. At least one dark "rhythm breaker" section exists
+9. At least 2 CTA sections (mid-page + above footer)
+10. Footer has 4 columns with "Website by Rankify" credit, no "Home" in quick links
+11. Sticky mobile CTA bar appears on mobile viewport
+12. All cards have hover lift effects
+13. Scroll reveal animations work on sections and cards
+14. No single orphan words in headings
+15. No mismatched button sizes in pairs
+16. Page background is warm gray, not white
+17. Shadows use brand-tinted colors, not generic black
+18. Card/feature icons are inline SVGs, NOT emoji
+19. Services page has expanded per-service sections (not just a card grid)
+20. About page tells the brand story with narrative content
+21. Copy sounds like a real business — no generic filler sentences
+22. If client provided logoUrl: logo image is used in header
+23. If client provided faviconUrl: custom favicon is used
+24. If client provided photoUrls: real photos appear on site (gallery, about, services)
+25. FAQ page has 8-12 relevant, business-specific questions and answers
