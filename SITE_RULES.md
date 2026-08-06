@@ -246,6 +246,26 @@ CSS: `.site-header.scrolled` gets `box-shadow: 0 4px 30px rgba(BRAND_RGB, 0.12)`
 
 ---
 
+## Home Page Section Order (RECOMMENDED)
+
+Follow this order for maximum conversion flow. Every section builds on the last:
+
+1. **Hero** — tagline + CTAs + floating stat cards (90vh)
+2. **Trust Badge Bar** — accreditations, licenses, certifications (if applicable)
+3. **Service Highlights** — 3-6 card grid linking to services page
+4. **"How It Works"** — 3-4 numbered steps
+5. **Dark Rhythm Breaker / "Us vs Them"** — comparison section on dark background
+6. **Mid-page CTA** — colored banner with headline + button
+7. **Review Marquee** — auto-scrolling Google review cards
+8. **Founder Quote** — personal quote on dark background (can combine with rhythm breaker)
+9. **Service Area Pills** — location coverage display
+10. **Bottom CTA** — final call to action before footer
+11. **Footer**
+
+Not every site needs every section. Skip what doesn't apply. But sections 1, 3, 4, 5, 7, 10, 11 should always be present.
+
+---
+
 ## Hero Section (Home Page)
 
 - Full viewport height or near it: `min-height: 90vh` on desktop, `min-height: 80vh` on mobile
@@ -381,6 +401,130 @@ The contact form MUST be a multi-step form, not a single long form. This is a co
 - Each card: suburb name as heading, brief text about service in that area, CTA link
 - Include a Google Maps embed: `<iframe src="https://www.google.com/maps/embed?pb=..." width="100%" height="400" style="border:0; border-radius: var(--radius-lg)" loading="lazy"></iframe>`
 - Map centered on the business address
+
+### "How It Works" Process Section (REQUIRED on home page)
+Every site MUST have a numbered "How It Works" section. This is on EVERY premium site — NPA (3 steps), Prime (4 steps), EVO Solar (6 steps), Tintek (8 steps), Coldflows (3 steps), Feedbird (3 steps), SoftRiver (3 steps). Pick 3-4 steps for most businesses.
+
+Structure:
+- Section label: "How it works"
+- Heading: "Getting started is simple" or similar (benefit-focused, not generic)
+- Steps in a horizontal row (desktop), stacked (mobile)
+- Each step:
+  - **Numbered circle**: `width: 48px; height: 48px; border-radius: 50%; background: var(--color-primary); color: white; font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; justify-content: center`
+  - **Step title**: `font-weight: 700; font-size: var(--font-size-xl)`
+  - **Step description**: 1-2 sentences, `color: var(--color-text-muted)`
+- Connecting line between steps on desktop: use `::after` pseudo-element on each step container (except last): `content: ''; position: absolute; top: 24px; left: 100%; width: 100%; height: 2px; background: linear-gradient(90deg, var(--color-primary), var(--color-border))`
+- Steps should be specific to the client's business, not generic ("Get in touch" → "Request your free solar quote")
+- Grid: `display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-xl)`
+
+### Review Marquee/Carousel (REQUIRED on home page if client has reviews)
+Auto-scrolling horizontal review ticker — used on Prime, EVO Solar, Tintek. Much more engaging than a static grid.
+
+Structure:
+- Section with `overflow: hidden` container
+- Google badge at top: Google icon SVG + stars + rating number + "Google Reviews" text, linking to their Google business page
+- Two-row marquee: `.marquee-row` contains `.marquee-track` with duplicated review cards for infinite scroll
+- Each review card (`.rcard`):
+  - `min-width: 350px; max-width: 400px; padding: var(--space-xl); background: var(--color-surface); border-radius: var(--radius-lg); border: 1px solid var(--color-border)`
+  - Star rating row: `★★★★★` in `color: #f59e0b` (amber)
+  - Quote text: `font-size: var(--font-size-base); line-height: 1.6; color: var(--color-text-muted)`
+  - Author row: circle initial avatar (`width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); color: white; font-weight: 700; display: flex; align-items: center; justify-content: center`) + name + location
+- CSS animation for infinite scroll:
+```css
+.marquee-track {
+  display: flex; gap: var(--space-lg);
+  animation: marquee 40s linear infinite;
+  width: max-content;
+}
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee-row:hover .marquee-track { animation-play-state: paused; }
+```
+- Duplicate ALL review cards inside `.marquee-track` for seamless loop
+- If client has NO specific review text: skip the marquee, just show aggregate rating badge with CTA to Google Reviews
+
+### "Us vs Them" Comparison Section (REQUIRED on home page)
+Every premium conversion site uses this — Coldflows, Prime, SoftRiver, Feedbird all have comparison tables. This is the strongest conversion pattern across all researched sites.
+
+Structure:
+- Section label: "Why choose us" or "The better way"
+- Heading: "{Business} vs the alternative" or "Why {Business} is different"
+- Two-column comparison:
+  - **Left column (others)**: header with competitor/generic label (e.g., "Other Electricians", "DIY", "Other Companies"), list of ✕ items with `color: #ef4444` (red) cross icon
+  - **Right column (client)**: header with client business name, list of ✓ items with `color: #22c55e` (green) check icon, highlighted with `background: rgba(PRIMARY_RGB, 0.04); border: 2px solid var(--color-primary)`
+- Each item: `padding: var(--space-sm) var(--space-md); font-size: var(--font-size-base)`
+- Use `border-radius: var(--radius-lg)` on both columns
+- Make comparisons SPECIFIC to the industry, not generic ("Hidden call-out fees" vs "Fixed pricing, no surprises")
+- On mobile: stack vertically, "others" first then client
+
+### Trust & Accreditation Badge Bar (if applicable)
+If the client mentions licenses, certifications, partnerships, or accreditations, add a badge bar. Used on EVO Solar (CEC, SAA, Tesla), Prime (Registered Builder, NDIS), NPA (NDIS Registered, PBS Practitioner).
+
+Structure:
+- Horizontal strip below the hero or after intro section
+- `background: var(--color-surface); padding: var(--space-lg) 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border)`
+- Flex row, centered, wrapping: `display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: var(--space-xl)`
+- Each badge: inline SVG icon (shield, check, certificate) + text label
+- `font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-muted); display: flex; align-items: center; gap: var(--space-xs)`
+- Icon: `width: 20px; height: 20px; color: var(--color-primary)`
+- Pull accreditations from client's `description`, `brandNotes`, or `services` data
+
+### Founder / Owner Section (on About page, preview on Home)
+Every premium site has a personal touch — NPA (Nadia), Prime (Nick's quote), EVO (Cameron), SoftRiver (team section). People buy from people, not businesses.
+
+Structure on Home Page (short version):
+- Dark background section (can be the rhythm breaker)
+- Large decorative quote mark: `font-size: 8rem; line-height: 1; color: rgba(255,255,255,0.08); font-family: Georgia, serif`
+- Blockquote: `font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 300; color: white; line-height: 1.45; font-style: italic; font-family: Georgia, serif`
+- Name and title below: `font-weight: 700; color: white` + `font-size: 0.82rem; color: var(--color-text-muted)`
+- Quote should be crafted from the client's `description` and `brandNotes` — what drives them
+
+Structure on About Page (full version):
+- Two-column: photo left (if `photoUrls` available), bio content right
+- If no photo: use a styled initial avatar or skip the photo column
+- Bio content: name, title, 2-3 paragraphs about their background, qualifications, why they started
+- Credentials list with check icons (license numbers, years experience, qualifications)
+
+### Service Area Location Pills (on Home Page and Locations Page)
+Used on Prime (32 locations), EVO Solar (40+ locations), Tintek (17 locations). Pills are better than a plain list — they look modern and are scannable.
+
+Structure:
+- Section or subsection with label "Service Areas" or "Where we work"
+- Flex wrap container: `display: flex; flex-wrap: wrap; gap: var(--space-xs); justify-content: center`
+- Each pill: `padding: 6px 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full); font-size: var(--font-size-sm); font-weight: 500; color: var(--color-text-muted)`
+- Pill hover: `background: rgba(PRIMARY_RGB, 0.08); border-color: var(--color-primary); color: var(--color-primary)`
+- On the Locations page: pills link to the corresponding location card section (`href="#suburb-slug"`)
+- Generate pills from the client's `serviceAreas` array
+
+### Guarantee / Risk Reversal Badge (if applicable)
+Used by Feedbird (14-day money-back), SoftRiver (100% money-back), Coldflows (30-day guarantee). Reduces friction massively.
+
+Structure:
+- Appears near pricing, CTAs, or form sections
+- Centered badge: `display: inline-flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-lg); background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2); border-radius: var(--radius-full)`
+- Shield/check icon in green + text (e.g., "100% satisfaction guarantee" or "Free quotes, no obligation")
+- `font-size: var(--font-size-sm); font-weight: 600; color: #15803d`
+- Not every business has a money-back guarantee — adapt to what's relevant: "Licensed & insured", "Fixed pricing — no surprises", "Free quotes, no obligation", "Satisfaction guaranteed"
+
+### Hero Stat Cards (floating glass cards in hero)
+Used on Prime (4 cards: 15+ years, 5.0 Google, Registered, 24/7). These add credibility above the fold without cluttering the hero text.
+
+Structure:
+- 3-4 small cards floating on the right side of the hero (desktop) or in a row below hero text (mobile)
+- Each card: `background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md); box-shadow: var(--glass-inset)`
+- Content: small SVG icon + large value (`font-weight: 800; font-size: var(--font-size-xl)`) + label (`font-size: var(--font-size-sm); color: rgba(255,255,255,0.7)`)
+- Pull stats from client data: years experience, review count/rating, license status, response time
+- On dark hero backgrounds: use white text. On light backgrounds: use dark text with `var(--glass-bg-light)`
+- On mobile: horizontal scroll row or 2x2 grid
+
+### Cost Comparison Table (for service businesses)
+Used by Feedbird — extremely effective for price-conscious buyers. Only add if the client's service can be compared to alternatives.
+
+Structure:
+- Table or card grid comparing cost of alternatives
+- Columns: "DIY", "Hire someone else", "Use {client}" — or whatever comparison makes sense
+- Each column: price/cost + brief pro/con tagline
+- Client's column highlighted: `background: rgba(PRIMARY_RGB, 0.04); border: 2px solid var(--color-primary); border-radius: var(--radius-lg)`
+- "Most popular" or "Best value" badge on client's column: `position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: white; padding: 4px 16px; border-radius: var(--radius-full); font-size: var(--font-size-sm); font-weight: 700`
 
 ---
 
@@ -573,13 +717,20 @@ These make the difference between a brochure and a lead generator:
 1. **Sticky header CTA** — "Get a Free Quote" button always visible in the header
 2. **Phone number in header** — with phone icon, click-to-call
 3. **Hero CTA** — two buttons above the fold, primary action + secondary
-4. **Trust badges** — license numbers, insurance, years in business, review count — visible near CTAs
-5. **Mid-page CTA section** — a colored banner between content sections with headline + button
-6. **Bottom CTA section** — just before the footer, strong call to action
-7. **Contact form is the star** — multi-step, not buried, prominent on contact page
-8. **Footer contact info** — phone, email, address, all clickable/mappable
-9. **Google Reviews badge** — if they have reviews, show rating + count prominently on home + testimonials page
-10. **Service area mentions** — suburb names appear naturally in content for local SEO
+4. **Hero stat cards** — 3-4 floating glass cards with key stats (years, reviews, certifications) for instant credibility
+5. **Trust badge bar** — license numbers, insurance, years in business, accreditations — below hero or after intro
+6. **"How It Works" section** — 3-4 numbered steps showing how simple it is to get started
+7. **Mid-page CTA section** — a colored banner between content sections with headline + button
+8. **"Us vs Them" comparison** — two-column comparison showing why THIS business beats alternatives
+9. **Review marquee** — auto-scrolling review cards with Google badge (if client has reviews)
+10. **Founder quote** — personal quote in a dark section to humanize the brand
+11. **Service area pills** — clickable location tags showing coverage breadth
+12. **Risk reversal badge** — guarantee, free quote, or no-obligation statement near CTAs
+13. **Bottom CTA section** — just before the footer, strong call to action
+14. **Contact form is the star** — multi-step, not buried, prominent on contact page
+15. **Footer contact info** — phone, email, address, all clickable/mappable
+16. **Google Reviews badge** — if they have reviews, show rating + count prominently on home + testimonials page
+17. **Service area mentions** — suburb names appear naturally in content for local SEO
 
 ---
 
@@ -616,6 +767,13 @@ These make the difference between a brochure and a lead generator:
 - NO static header — must have scroll-aware shadow/opacity change via JS
 - NO identical copy across pages — each page needs unique, purposeful content
 - NO services page that's just a list of names — each service needs 2-3 paragraphs of real content
+- NO home page without a "How It Works" process section — every premium site has one
+- NO generic "How It Works" steps like "Step 1: Contact Us" — make them specific to the business
+- NO home page without a comparison/differentiation section — show why THIS business is better
+- NO review section that's just static cards in a grid — use a marquee/carousel for dynamism
+- NO about page without a personal founder/owner element — people buy from people
+- NO service areas listed as a plain comma-separated paragraph — use location pill tags
+- NO hero without floating stat cards — they add instant credibility above the fold
 
 ---
 
@@ -623,28 +781,58 @@ These make the difference between a brochure and a lead generator:
 
 Before marking a site as complete, verify ALL of these:
 
+### Core Technical
 1. Every page loads with no console errors
 2. Every page has unique `<title>` and `<meta description>`
-3. Header is fixed, frosted glass, hamburger on mobile, scroll shadow effect active
-4. NO "Home" link in nav — logo links to index.html instead
-5. Hero is at least 80vh with tagline, CTAs, and trust badges
-6. All phone numbers are clickable `tel:` links
-7. Contact form is multi-step (not one long form), submits via Formspree (not mailto)
-8. At least one dark "rhythm breaker" section exists
-9. At least 2 CTA sections (mid-page + above footer)
-10. Footer has 4 columns with "Website by Rankify" credit, no "Home" in quick links
-11. Sticky mobile CTA bar appears on mobile viewport
-12. All cards have hover lift effects
-13. Scroll reveal animations work on sections and cards
-14. No single orphan words in headings
-15. No mismatched button sizes in pairs
-16. Page background is warm gray, not white
-17. Shadows use brand-tinted colors, not generic black
-18. Card/feature icons are inline SVGs, NOT emoji
-19. Services page has expanded per-service sections (not just a card grid)
-20. About page tells the brand story with narrative content
-21. Copy sounds like a real business — no generic filler sentences
-22. If client provided logoUrl: logo image is used in header
-23. If client provided faviconUrl: custom favicon is used
-24. If client provided photoUrls: real photos appear on site (gallery, about, services)
-25. FAQ page has 8-12 relevant, business-specific questions and answers
+3. JSON-LD LocalBusiness schema on home page
+4. `<html lang="en-AU">`, viewport meta, OG tags on every page
+5. All phone numbers are clickable `tel:` links
+6. No inline styles — everything in style.css
+7. No raw hex colors in HTML — CSS variables only
+
+### Header & Navigation
+8. Header is fixed, frosted glass, hamburger on mobile, scroll shadow effect active
+9. NO "Home" link in nav — logo links to index.html instead
+10. Phone number + CTA button visible in header on desktop
+11. Mobile menu is full-screen overlay with stagger animation, not wrapping nav links
+
+### Hero & Above the Fold
+12. Hero is at least 80vh with tagline, CTAs, and trust badges
+13. Hero has 3-4 floating glass stat cards (years, reviews, certifications)
+14. Trust/accreditation badge bar below hero (if client has licenses/certs)
+
+### Conversion Sections (Home Page)
+15. "How It Works" numbered process section exists (3-4 steps)
+16. "Us vs Them" comparison section exists with specific industry comparisons
+17. Review marquee carousel exists (if client has reviews) with Google badge
+18. Founder/owner quote section exists in a dark background block
+19. Service area location pills section exists
+20. Risk reversal / guarantee badge near CTAs
+21. At least 2 CTA sections (mid-page + above footer)
+22. At least one dark "rhythm breaker" section exists
+
+### Design Quality
+23. Page background is warm gray, not white
+24. Shadows use brand-tinted colors, not generic black
+25. Card/feature icons are inline SVGs, NOT emoji
+26. All cards have hover lift effects
+27. Scroll reveal animations work on sections and cards
+28. No single orphan words in headings (`text-wrap: balance`)
+29. No mismatched button sizes in pairs
+30. Sticky mobile CTA bar appears on mobile viewport
+
+### Content Quality
+31. Services page has expanded per-service sections (not just a card grid)
+32. About page tells the brand story with founder bio section
+33. Copy sounds like a real business — no generic filler sentences
+34. FAQ page has 8-12 relevant, business-specific questions and answers
+35. Each page has unique, purposeful content (not copy-pasted between pages)
+
+### Client Assets
+36. If client provided logoUrl: logo image is used in header
+37. If client provided faviconUrl: custom favicon is used
+38. If client provided photoUrls: real photos appear on site (gallery, about, services)
+
+### Footer
+39. Footer has 4 columns with "Website by Rankify" credit
+40. No "Home" in quick links — logo handles that
