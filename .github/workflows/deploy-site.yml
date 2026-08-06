@@ -9,6 +9,11 @@ on:
       company:
         required: true
 
+  push:
+    branches: [master]
+    paths:
+      - 'sites/**'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,67 +21,96 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_PAT }}
+          fetch-depth: 2
 
-      - name: Create client repo
+      - name: Detect slugs to deploy
+        id: detect
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "slugs=${{ inputs.slug }}" >> $GITHUB_OUTPUT
+          else
+            SLUGS=$(git diff --name-only HEAD~1 HEAD -- sites/ | cut -d'/' -f2 | sort -u | tr '\n' ' ')
+            echo "slugs=${SLUGS}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy each site
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
+          ROUTINE_SECRET: ${{ secrets.ROUTINE_SECRET }}
         run: |
-          # Create the repo (ignore error if already exists)
-          gh repo create rankify-ops/${{ inputs.slug }} --public 2>/dev/null || true
+          for SLUG in ${{ steps.detect.outputs.slugs }}; do
+            echo "=== Deploying: ${SLUG} ==="
 
-          # Clone it
-          git clone https://x-access-token:${GH_TOKEN}@github.com/rankify-ops/${{ inputs.slug }}.git /tmp/${{ inputs.slug }}
+            # Find the pending file for metadata
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              CLIENT_ID="${{ inputs.clientId }}"
+              COMPANY="${{ inputs.company }}"
+            else
+              PENDING_FILE=$(ls pending/*.json 2>/dev/null | head -1)
+              if [ -n "$PENDING_FILE" ]; then
+                CLIENT_ID=$(basename "$PENDING_FILE" .json)
+                COMPANY=$(python3 -c "import json; d=json.load(open('$PENDING_FILE')); print(d.get('company',''))")
+              else
+                CLIENT_ID="unknown"
+                COMPANY="${SLUG}"
+              fi
+            fi
 
-          # Copy generated site files
-          cp -r sites/${{ inputs.slug }}/* /tmp/${{ inputs.slug }}/
+            # Check site files exist
+            if [ ! -d "sites/${SLUG}" ]; then
+              echo "No site files for ${SLUG}, skipping"
+              continue
+            fi
 
-          # Configure git
-          cd /tmp/${{ inputs.slug }}
+            # Create the repo (ignore if exists)
+            gh repo create rankify-ops/${SLUG} --public 2>/dev/null || true
+
+            # Clone it
+            git clone https://x-access-token:${GH_TOKEN}@github.com/rankify-ops/${SLUG}.git /tmp/${SLUG}
+
+            # Copy generated site files
+            cp -r sites/${SLUG}/* /tmp/${SLUG}/
+
+            # Configure git and push
+            cd /tmp/${SLUG}
+            git config user.name "rankify-ops"
+            git config user.email "rankify.aus@gmail.com"
+            git add -A
+            git commit -m "Auto-generated site for ${COMPANY}" || echo "No changes"
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git push origin "$BRANCH"
+            cd $GITHUB_WORKSPACE
+
+            # Enable GitHub Pages
+            DEFAULT_BRANCH=$(curl -s "https://api.github.com/repos/rankify-ops/${SLUG}" \
+              -H "Authorization: token ${GH_TOKEN}" | grep -o '"default_branch":"[^"]*"' | cut -d'"' -f4)
+            curl -s -X POST "https://api.github.com/repos/rankify-ops/${SLUG}/pages" \
+              -H "Authorization: token ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/json" \
+              -d "{\"build_type\":\"legacy\",\"source\":{\"branch\":\"${DEFAULT_BRANCH}\",\"path\":\"/\"}}" || true
+
+            # Update CRM status
+            if [ "${CLIENT_ID}" != "unknown" ] && [ -n "${ROUTINE_SECRET}" ]; then
+              curl -s -X POST "https://rankify-crm.vercel.app/api/routine" \
+                -H "Authorization: Bearer ${ROUTINE_SECRET}" \
+                -H "Content-Type: application/json" \
+                -d "{\"action\":\"update_status\",\"clientId\":\"${CLIENT_ID}\",\"updates\":{\"status\":\"active\",\"website\":\"https://rankify-ops.github.io/${SLUG}/\",\"notes\":\"Site auto-generated and deployed to GitHub Pages\"}}"
+            fi
+
+            # Send notification
+            curl -s -X POST "https://lert.dev/p/a508f12c-6bbc-422f-ad6c-1ff5abf7a5fa" \
+              -H "Content-Type: application/json" \
+              -d "{\"title\":\"[RANKIFY] New site built\",\"body\":\"${COMPANY} — https://rankify-ops.github.io/${SLUG}/\"}"
+
+            # Cleanup
+            rm -rf "sites/${SLUG}"
+            rm -f "pending/${CLIENT_ID}.json"
+          done
+
+          # Commit cleanup
           git config user.name "rankify-ops"
           git config user.email "rankify.aus@gmail.com"
-
-          # Commit and push
           git add -A
-          git commit -m "Auto-generated site for ${{ inputs.company }}" || echo "No changes"
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          git push origin "$BRANCH"
-
-      - name: Enable GitHub Pages
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          # Get the default branch name
-          DEFAULT_BRANCH=$(curl -s "https://api.github.com/repos/rankify-ops/${{ inputs.slug }}" \
-            -H "Authorization: token ${GH_TOKEN}" | grep -o '"default_branch":"[^"]*"' | cut -d'"' -f4)
-          # Enable Pages on the default branch
-          curl -s -X POST "https://api.github.com/repos/rankify-ops/${{ inputs.slug }}/pages" \
-            -H "Authorization: token ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: application/json" \
-            -d "{\"build_type\":\"legacy\",\"source\":{\"branch\":\"${DEFAULT_BRANCH}\",\"path\":\"/\"}}" || true
-
-      - name: Update CRM status
-        run: |
-          curl -s -X POST "https://rankify-crm.vercel.app/api/routine" \
-            -H "Authorization: Bearer ${{ secrets.ROUTINE_SECRET }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"action\":\"update_status\",\"clientId\":\"${{ inputs.clientId }}\",\"updates\":{\"status\":\"active\",\"website\":\"https://rankify-ops.github.io/${{ inputs.slug }}/\",\"notes\":\"Site auto-generated and deployed to GitHub Pages\"}}"
-
-      - name: Send notification
-        run: |
-          curl -s -X POST "https://lert.dev/p/a508f12c-6bbc-422f-ad6c-1ff5abf7a5fa" \
-            -H "Content-Type: application/json" \
-            -d "{\"title\":\"[RANKIFY] New site built\",\"body\":\"${{ inputs.company }} — https://rankify-ops.github.io/${{ inputs.slug }}/\"}"
-
-      - name: Cleanup pending and sites
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          cd $GITHUB_WORKSPACE
-          git config user.name "rankify-ops"
-          git config user.email "rankify.aus@gmail.com"
-          rm -rf "sites/${{ inputs.slug }}"
-          rm -f "pending/${{ inputs.clientId }}.json"
-          git add -A
-          git commit -m "Deployed: ${{ inputs.company }}" || echo "Nothing to clean"
+          git commit -m "Deployed and cleaned up" || echo "Nothing to clean"
           git push origin master
